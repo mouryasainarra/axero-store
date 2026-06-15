@@ -1,0 +1,115 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dashboard — AXERO Admin</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/style.css"></head>
+<body>
+<header class="admin-top"><div class="bar">
+  <%- include('_logo', { size:'', href:'/admin' }) %>
+  <nav>
+    <a href="/" target="_blank">View shop &#8599;</a>
+    <a href="/admin/products/new" class="btn btn-primary" style="padding:9px 18px;">+ Add product</a>
+    <form method="POST" action="/admin/logout" style="display:inline;"><button class="tlink" style="color:var(--muted);">Log out</button></form>
+  </nav>
+</div></header>
+
+<div class="admin-wrap">
+  <div class="dash-head">
+    <div>
+      <h1 class="hi">Welcome back, <b>AXERO</b></h1>
+      <p class="date"><%= new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) %></p>
+    </div>
+    <a href="/admin/products/new" class="btn btn-ghost">+ Add product</a>
+  </div>
+
+  <% if (!payReady) { %><div class="banner">&#9888; Razorpay isn&rsquo;t connected yet, so checkout is disabled and revenue stays at zero. Add <code>RAZORPAY_KEY_ID</code> &amp; secret to take live payments.</div><% } %>
+
+  <!-- KPI cards -->
+  <div class="stats">
+    <div class="stat">
+      <div class="lbl"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/></svg>Revenue</div>
+      <div class="val gold"><%= money(stats.revenue) %></div>
+      <div class="delta"><b><%= stats.orderCount %></b> paid orders</div>
+    </div>
+    <div class="stat">
+      <div class="lbl"><svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Profit</div>
+      <div class="val"><%= money(stats.profit) %></div>
+      <div class="delta"><b><%= stats.margin %>%</b> margin · cost <%= money(stats.cost) %></div>
+    </div>
+    <div class="stat">
+      <div class="lbl"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Units sold</div>
+      <div class="val"><%= stats.units %></div>
+      <div class="delta"><b><%= stats.liveCount %></b> live products</div>
+    </div>
+    <div class="stat">
+      <div class="lbl"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18M8 7V5a4 4 0 0 1 8 0v2"/></svg>Inventory value</div>
+      <div class="val"><%= money(stats.inventoryValue) %></div>
+      <div class="delta"><b><%= stats.productCount %></b> products in catalogue</div>
+    </div>
+  </div>
+
+  <!-- chart + inventory health -->
+  <div class="dash-grid">
+    <div class="chart-card">
+      <div class="card-h"><h3>Revenue · last 7 days</h3><span class="muted">Total <%= money(stats.chart.reduce((n,c)=>n+c.value,0)) %></span></div>
+      <div class="bars">
+        <% stats.chart.forEach(c => { const h = Math.round((c.value / stats.maxVal) * 100); %>
+          <div class="bar">
+            <div class="amt"><%= c.value ? money(c.value).replace('.00','') : '' %></div>
+            <div class="col" data-zero="<%= c.value ? 0 : 1 %>" style="height:<%= Math.max(h,2) %>%;"></div>
+            <div class="d"><%= c.label %></div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+    <div class="side-card">
+      <div class="card-h"><h3>Inventory health</h3></div>
+      <div class="line"><span class="k"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>In stock &amp; live</span><span class="v"><%= stats.liveCount - stats.outOfStock.length %></span></div>
+      <div class="line"><span class="k"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Low stock (&le;5)</span><span class="v warn"><%= stats.lowStock.length %></span></div>
+      <div class="line"><span class="k"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>Out of stock</span><span class="v bad"><%= stats.outOfStock.length %></span></div>
+      <% if (stats.lowStock.length || stats.outOfStock.length) { %>
+        <div class="alerts">
+          <% stats.outOfStock.slice(0,3).forEach(p => { %><div class="alert-row"><%= p.name %><span class="tag out">Out</span></div><% }) %>
+          <% stats.lowStock.slice(0,3).forEach(p => { %><div class="alert-row"><%= p.name %><span class="tag low"><%= p.stock %> left</span></div><% }) %>
+        </div>
+      <% } else { %><p class="muted" style="margin:12px 0 0;font-size:.85rem;">All products are well stocked. &#10003;</p><% } %>
+    </div>
+  </div>
+
+  <!-- products -->
+  <div class="panel">
+    <div class="panel-h"><h3>Products</h3><a href="/admin/products/new" class="btn btn-primary" style="padding:8px 16px;">+ Add product</a></div>
+    <% if (!products.length) { %>
+      <p class="sub" style="margin:0;">No products yet. <a class="tlink" href="/admin/products/new">Add your first one &rarr;</a></p>
+    <% } else { %>
+    <table><thead><tr><th></th><th>Name</th><th>Collection</th><th>Category</th><th>Price</th><th>Cost</th><th>Margin</th><th>Stock</th><th>Status</th><th></th></tr></thead><tbody>
+      <% products.forEach(p => { const m = p.price ? Math.round(((p.price-(p.cost||0))/p.price)*100) : 0;
+           const sc = p.stock<=0 ? 'out' : (p.stock<=5 ? 'low' : 'ok'); %>
+        <tr>
+          <td><% if (p.image_url) { %><img class="pthumb" src="<%= p.image_url %>" alt=""><% } else { %><div class="pthumb"></div><% } %></td>
+          <td><strong><%= p.name %></strong></td>
+          <td><%= p.gender || 'Men' %></td>
+          <td><%= p.category %></td>
+          <td><%= money(p.price) %><% if (p.compare_at) { %> <span style="color:var(--muted);text-decoration:line-through;font-size:.78rem;"><%= money(p.compare_at) %></span><% } %></td>
+          <td style="color:var(--muted);"><%= p.cost ? money(p.cost) : '—' %></td>
+          <td><%= p.cost ? m + '%' : '—' %></td>
+          <td><span class="stock-badge <%= sc %>"><%= p.stock<=0 ? 'Out' : p.stock %></span></td>
+          <td><span class="pill-tag <%= p.active ? 'on' : 'off' %>"><%= p.active ? 'Live' : 'Hidden' %></span></td>
+          <td style="white-space:nowrap;"><a class="tlink" href="/admin/products/<%= p.id %>/edit">Edit</a>
+            <form method="POST" action="/admin/products/<%= p.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete this product? This cannot be undone.');"><button class="tlink danger" type="submit">Delete</button></form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody></table>
+    <% } %>
+  </div>
+
+  <!-- orders -->
+  <div class="panel">
+    <div class="panel-h"><h3>Recent orders</h3></div>
+    <% if (!orders.length) { %><p class="sub" style="margin:0;">No orders yet.</p><% } else { %>
+    <table><thead><tr><th>#</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody>
+      <% orders.slice(0,12).forEach(o => { let items=[]; try{items=JSON.parse(o.items_json||'[]');}catch(e){} %>
+        <tr><td>#<%= o.id %></td><td><%= fmtDate(o.created_at) %></td><td><%= o.name || o.email || '—' %><% if (o.pincode) { %> &middot; <%= o.pincode %><% } %></td><td><%= items.reduce((n,i)=>n+(i.qty||0),0) %></td><td><%= money(o.amount_total||0) %></td><td><span class="pill-tag on"><%= o.status %></span></td></tr>
+      <% }) %>
+    </tbody></table>
+    <% } %>
+  </div>
+</div>
+</body></html>

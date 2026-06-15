@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title><%= product ? 'Edit' : 'Add' %> product — AXERO Admin</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/style.css"></head>
+<body>
+<header class="admin-top"><div class="bar" style="display:flex;align-items:center;gap:18px;">
+  <%- include('_logo', { size:'', href:'/admin' }) %>
+  <nav><a href="/admin">&larr; Back to dashboard</a></nav>
+</div></header>
+<div class="admin-wrap" style="max-width:760px;">
+  <h1 class="admin-h"><%= product ? 'Edit product' : 'Add a product' %></h1>
+  <p class="sub">Fill in the details. Customers see these in the shop right away (if status is Live).</p>
+  <form class="panel" method="POST" action="<%= product ? '/admin/products/' + product.id : '/admin/products' %>">
+    <div class="form-grid">
+      <div class="field full"><label for="name">Product name</label><input id="name" name="name" required value="<%= product ? product.name : '' %>" placeholder="e.g. Onyx Slim-Fit Suit"></div>
+      <div class="field"><label for="gender">Collection</label><select id="gender" name="gender"><% ['Men','Women'].forEach(g => { %><option value="<%= g %>" <%= product && product.gender === g ? 'selected' : (!product && g==='Men' ? 'selected':'') %>><%= g %></option><% }) %></select></div>
+      <div class="field"><label for="category">Category</label><select id="category" name="category"><% ALL_CATS.forEach(c => { %><option value="<%= c %>" <%= product && product.category === c ? 'selected' : '' %>><%= c %></option><% }) %></select></div>
+      <div class="field"><label for="stock">Stock quantity</label><input id="stock" name="stock" type="number" min="0" value="<%= product ? product.stock : 10 %>"></div>
+      <div class="field"><label for="price">Selling price (&#8377;) <span class="hint">what customers pay</span></label><input id="price" name="price" type="number" step="0.01" min="0" required value="<%= product ? (product.price/100).toFixed(2) : '' %>" placeholder="8999.00"></div>
+      <div class="field"><label for="cost">Cost price (&#8377;) <span class="hint">your buying cost — used for profit</span></label><input id="cost" name="cost" type="number" step="0.01" min="0" value="<%= product && product.cost ? (product.cost/100).toFixed(2) : '' %>" placeholder="4500.00"></div>
+      <div class="field"><label for="compare_at">Was price (&#8377;) <span class="hint">optional — shows a sale tag</span></label><input id="compare_at" name="compare_at" type="number" step="0.01" min="0" value="<%= product && product.compare_at ? (product.compare_at/100).toFixed(2) : '' %>" placeholder="11999.00"></div>
+      <div class="field full"><label for="image_url">Image URL <span class="hint">paste a link to a photo</span></label><input id="image_url" name="image_url" value="<%= product ? product.image_url : '' %>" placeholder="https://…/photo.jpg"></div>
+      <div class="field full"><label for="sizes">Sizes <span class="hint">comma-separated (e.g. S,M,L,XL,XXL or 28,30,32,34)</span></label><input id="sizes" name="sizes" value="<%= product ? product.sizes : 'S,M,L,XL,XXL' %>"></div>
+      <div class="field full"><label for="description">Description <span class="hint">optional</span></label><textarea id="description" name="description" rows="3" placeholder="Fabric, fit notes, styling…"><%= product ? product.description : '' %></textarea></div>
+      <div class="field check full"><input id="active" name="active" type="checkbox" <%= !product || product.active ? 'checked' : '' %>><label for="active" style="margin:0;">Live — show this product in the shop</label></div>
+    </div>
+    <div style="margin-top:22px;display:flex;gap:12px;"><button class="btn btn-primary" type="submit"><%= product ? 'Save changes' : 'Add product' %></button><a class="btn btn-ghost" href="/admin">Cancel</a></div>
+  </form>
+</div>
+</body></html>

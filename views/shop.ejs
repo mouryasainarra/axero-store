@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AXERO — <%= gender %> | Style that speaks you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<div class="marquee">FREE DELIVERY OVER &#8377;2999 &nbsp;&bull;&nbsp; <b>STYLE THAT SPEAKS YOU</b> &nbsp;&bull;&nbsp; 60-DAY RETURNS</div>
+
+<header class="site"><div class="wrap bar">
+  <%- include('_logo', { size:'', href:'/' }) %>
+  <nav class="main">
+    <% cats.forEach(c => { %>
+      <a href="/?gender=<%= gender %>&category=<%= encodeURIComponent(c) %>" class="<%= category === c ? 'active' : '' %>"><%= c %></a>
+    <% }) %>
+  </nav>
+  <div class="tools">
+    <span class="gender-switch">
+      <a href="/?gender=Men" class="<%= gender === 'Men' ? 'on' : '' %>">Men</a>
+      <a href="/?gender=Women" class="<%= gender === 'Women' ? 'on' : '' %>">Women</a>
+    </span>
+    <button class="icbtn" id="bagBtn" aria-label="Open bag" style="margin-left:6px;">
+      <svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      <span class="badge" id="bagCount">0</span>
+    </button>
+  </div>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <img class="hero-logo" src="/logo.png" alt="AXERO">
+  <p class="eyebrow"><%= gender %> &mdash; <%= cats.join(' • ') %></p>
+  <p class="tagline">Style that speaks you</p>
+  <div><a href="#shop" class="btn btn-primary">Shop <%= gender %></a></div>
+</div></section>
+
+<section class="values"><div class="wrap">
+  <div class="v"><svg viewBox="0 0 24 24"><path d="M3 8l5-5 4 4 4-4 5 5-9 13z"/></svg><span>Premium Quality</span></div>
+  <div class="v"><svg viewBox="0 0 24 24"><path d="M4 7h16M7 7l-2 13h14L17 7M9 7V5a3 3 0 0 1 6 0v2"/></svg><span>Modern Fit</span></div>
+  <div class="v"><svg viewBox="0 0 24 24"><path d="M3 21l4-1 11-11-3-3L4 17z M14 6l3 3"/></svg><span>Unique Designs</span></div>
+  <div class="v"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Made For You</span></div>
+</div></section>
+
+<main class="wrap" id="shop">
+  <p class="breadcrumb">Home / <a href="/?gender=<%= gender %>" style="color:var(--cream);"><%= gender %></a> / <b><%= category === 'All' ? 'All' : category %></b></p>
+  <div class="section-head">
+    <h2><%= category === 'All' ? gender + '\u2019s Collection' : category %></h2>
+    <span class="count"><%= products.length %> styles</span>
+  </div>
+
+  <div class="chips">
+    <a href="/?gender=<%= gender %>" class="chip <%= category === 'All' ? 'active' : '' %>">All</a>
+    <% cats.forEach(c => { %>
+      <a href="/?gender=<%= gender %>&category=<%= encodeURIComponent(c) %>" class="chip <%= category === c ? 'active' : '' %>"><%= c %></a>
+    <% }) %>
+  </div>
+
+  <% if (!payReady) { %>
+    <div class="banner">Payments aren&rsquo;t switched on yet &mdash; add your Razorpay keys to take real orders. Browsing and the bag still work.</div>
+  <% } %>
+
+  <div class="grid">
+    <% if (!products.length) { %>
+      <div class="empty"><b>Nothing here yet</b>Add <%= gender %>&rsquo;s products from the admin panel and they&rsquo;ll appear here.</div>
+    <% } %>
+    <% products.forEach(p => {
+        const sizes = (p.sizes || '').split(',').map(s => s.trim()).filter(Boolean);
+        const off = p.compare_at ? Math.round((1 - p.price / p.compare_at) * 100) : 0;
+        const soldOut = p.stock <= 0;
+    %>
+      <article class="card">
+        <div class="ph">
+          <% if (p.image_url) { %><img src="<%= p.image_url %>" alt="<%= p.name %>" loading="lazy"><% } else { %><div class="noimg"><%= p.category %></div><% } %>
+          <% if (p.compare_at) { %><span class="ribbon">-<%= off %>%</span><% } %>
+          <% if (soldOut) { %><div class="soldout">Sold out</div><% } %>
+        </div>
+        <div class="info">
+          <p class="name"><%= p.name %></p>
+          <p class="meta"><%= p.category %><% if (sizes.length) { %> &bull; <%= sizes.join(' / ') %><% } %></p>
+          <div class="price"><b><%= money(p.price) %></b><% if (p.compare_at) { %><span class="was"><%= money(p.compare_at) %></span><% } %></div>
+          <% if (!soldOut) { %>
+          <div class="row">
+            <select aria-label="Size for <%= p.name %>" id="size-<%= p.id %>"><% sizes.forEach(s => { %><option value="<%= s %>"><%= s %></option><% }) %></select>
+            <button class="add" data-id="<%= p.id %>" data-name="<%= p.name.replace(/"/g,'&quot;') %>" data-price="<%= p.price %>" data-img="<%= p.image_url %>" data-size-select="size-<%= p.id %>">Add to bag</button>
+          </div>
+          <% } %>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+</main>
+
+<footer class="site"><div class="wrap">
+  <img class="brand-logo" src="/logo.png" alt="AXERO">
+  <p>Premium fashion &mdash; designed in India to speak for you.</p>
+  <div class="ib">Indian Brand &bull; Global Vision</div>
+  <div class="base">&copy; <%= new Date().getFullYear() %> AXERO &mdash; all rights reserved.</div>
+</div></footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Shopping bag">
+  <header><h3 id="drawerTitle">Your bag</h3>
+    <button class="icbtn" id="closeDrawer" aria-label="Close"><svg viewBox="0 0 24 24" style="stroke-width:2;"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </header>
+  <div class="body">
+    <div class="items" id="cartItems"></div>
+    <div class="ship" id="shipStep" style="display:none;">
+      <h4>Delivery details</h4>
+      <div class="field"><label>Full name</label><input id="s_name" autocomplete="name"></div>
+      <div class="field"><label>Phone</label><input id="s_phone" inputmode="numeric" autocomplete="tel" placeholder="10-digit mobile"></div>
+      <div class="field"><label>Email (for receipt)</label><input id="s_email" type="email" autocomplete="email"></div>
+      <div class="field"><label>Address</label><textarea id="s_address" rows="2" autocomplete="street-address"></textarea></div>
+      <div class="two"><div class="field"><label>City</label><input id="s_city"></div><div class="field"><label>PIN code</label><input id="s_pincode" inputmode="numeric" placeholder="6 digits"></div></div>
+      <p class="shiperr" id="shipErr"></p>
+    </div>
+  </div>
+  <div class="foot" id="cartFoot" style="display:none;">
+    <div class="total"><span>Total</span><span id="cartTotal">&#8377;0.00</span></div>
+    <button class="btn btn-ghost btn-block" id="proceedBtn">Proceed to checkout</button>
+    <button class="btn btn-primary btn-block" id="payBtn" style="display:none;">Pay securely</button>
+  </div>
+</aside>
+
+<script>window.AXERO_PAY_READY = <%= payReady ? 'true' : 'false' %>;</script>
+<script src="/js/cart.js"></script>
+</body>
+</html>
