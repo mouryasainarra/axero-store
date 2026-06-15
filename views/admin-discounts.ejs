@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Discount codes — AXERO Admin</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/style.css"></head>
+<body>
+<header class="admin-top"><div class="bar" style="display:flex;align-items:center;gap:18px;">
+  <%- include('_logo', { size:'', href:'/admin' }) %>
+  <nav><a href="/admin">&larr; Back to dashboard</a></nav>
+</div></header>
+<div class="admin-wrap" style="max-width:900px;">
+  <h1 class="admin-h">Discount codes</h1>
+  <p class="sub">Create codes customers can enter at checkout. Percentage off the order, or a flat amount off.</p>
+
+  <form class="panel" method="POST" action="/admin/discounts">
+    <div class="form-grid">
+      <div class="field"><label for="code">Code</label><input id="code" name="code" required placeholder="WELCOME10" style="text-transform:uppercase;"></div>
+      <div class="field"><label for="type">Type</label><select id="type" name="type"><option value="percent">Percent off (%)</option><option value="flat">Flat amount off (&#8377;)</option></select></div>
+      <div class="field"><label for="value">Value <span class="hint">10 = 10% or &#8377;10 depending on type</span></label><input id="value" name="value" type="number" step="0.01" min="1" required placeholder="10"></div>
+      <div class="field"><label for="min_amount">Min order (&#8377;) <span class="hint">optional</span></label><input id="min_amount" name="min_amount" type="number" step="0.01" min="0" placeholder="0"></div>
+    </div>
+    <div style="margin-top:18px;"><button class="btn btn-primary" type="submit">Add code</button></div>
+  </form>
+
+  <div class="panel" style="margin-top:22px;">
+    <table class="tbl"><thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min order</th><th></th></tr></thead><tbody>
+      <% if (!discounts.length) { %><tr><td colspan="5" style="color:var(--muted);">No codes yet.</td></tr><% } %>
+      <% discounts.forEach(d => { %>
+        <tr>
+          <td><b><%= d.code %></b></td>
+          <td><%= d.type === 'flat' ? 'Flat' : 'Percent' %></td>
+          <td><%= d.type === 'flat' ? money(d.value) : d.value + '%' %></td>
+          <td><%= d.min_amount ? money(d.min_amount) : '—' %></td>
+          <td><form method="POST" action="/admin/discounts/<%= d.id %>/delete" onsubmit="return confirm('Delete this code?');"><button class="btn btn-ghost btn-sm">Delete</button></form></td>
+        </tr>
+      <% }) %>
+    </tbody></table>
+  </div>
+</div>
+</body></html>

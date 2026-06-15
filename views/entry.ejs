@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AXERO — Style that speaks you</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/style.css"></head>
-<body class="entry-body">
+<body>
   <div class="entry">
     <div class="entry-top">
       <img class="entry-logo" src="/logo.png" alt="AXERO">
@@ -7,23 +7,32 @@
       <p class="entry-prompt">Choose your collection</p>
     </div>
     <div class="entry-split">
-      <a class="entry-tile" href="/?gender=Men">
-        <div class="et-inner">
-          <span class="et-eyebrow">For Him</span>
-          <span class="et-title">Men</span>
-          <span class="et-cats">Suits &bull; Sportswear &bull; Oversized &bull; Printed Jeans</span>
-          <span class="et-go">Enter &rarr;</span>
-        </div>
-      </a>
-      <a class="entry-tile women" href="/?gender=Women">
-        <div class="et-inner">
-          <span class="et-eyebrow">For Her</span>
-          <span class="et-title">Women</span>
-          <span class="et-cats">Dresses &bull; Tops &bull; Co-ords &bull; Printed Jeans</span>
-          <span class="et-go">Enter &rarr;</span>
-        </div>
-      </a>
+      <a class="entry-tile" href="/?gender=Men"><div class="et-inner">
+        <span class="et-eyebrow">For Him</span><span class="et-title">Men</span>
+        <span class="et-cats">Suits &bull; Sportswear &bull; Oversized &bull; Printed Jeans</span><span class="et-go">Enter &rarr;</span>
+      </div></a>
+      <a class="entry-tile women" href="/?gender=Women"><div class="et-inner">
+        <span class="et-eyebrow">For Her</span><span class="et-title">Women</span>
+        <span class="et-cats">Dresses &bull; Tops &bull; Co-ords &bull; Printed Jeans</span><span class="et-go">Enter &rarr;</span>
+      </div></a>
     </div>
     <p class="entry-foot">Indian Brand &bull; Global Vision</p>
   </div>
+
+  <% if (typeof featured !== 'undefined' && featured.length) { %>
+  <section class="wrap featured">
+    <div class="section-head"><h2>Featured</h2><a class="seeall" href="/?gender=Men">Shop all &rarr;</a></div>
+    <div class="grid">
+      <% featured.forEach(p => { %>
+        <article class="card">
+          <a class="ph" href="/product/<%= p.id %>"><% if (p.image_url) { %><img src="<%= p.image_url %>" loading="lazy" alt="<%= p.name %>"><% } else { %><div class="noimg"><%= p.category %></div><% } %><% if (p.compare_at) { %><span class="ribbon">-<%= Math.round((1-p.price/p.compare_at)*100) %>%</span><% } %></a>
+          <div class="info"><a class="name" href="/product/<%= p.id %>"><%= p.name %></a><div class="price"><b><%= money(p.price) %></b><% if (p.compare_at) { %><span class="was"><%= money(p.compare_at) %></span><% } %></div></div>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
+
+  <%- include('_footer') %>
+  <script src="/js/cart.js"></script>
 </body></html>

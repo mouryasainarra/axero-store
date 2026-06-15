@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= title %> — AXERO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="marquee"><b>STYLE THAT SPEAKS YOU</b></div>
+<header class="site"><div class="wrap bar">
+  <%- include('_logo', { size:'', href:'/' }) %>
+  <nav class="main"><a href="/?gender=Men">Men</a><a href="/?gender=Women">Women</a><a href="/sale" class="sale-link">Sale</a></nav>
+</div></header>
+<main class="wrap page">
+  <h1 class="page-title"><%= title %></h1>
+  <div class="page-body"><%- body %></div>
+  <p style="margin-top:30px;"><a href="/" class="btn btn-ghost">Back to shop</a></p>
+</main>
+<%- include('_footer') %>
+</body>
+</html>

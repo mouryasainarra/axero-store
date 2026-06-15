@@ -4,6 +4,7 @@
   <%- include('_logo', { size:'', href:'/admin' }) %>
   <nav>
     <a href="/" target="_blank">View shop &#8599;</a>
+    <a href="/admin/discounts">Discount codes</a>
     <a href="/admin/products/new" class="btn btn-primary" style="padding:9px 18px;">+ Add product</a>
     <form method="POST" action="/admin/logout" style="display:inline;"><button class="tlink" style="color:var(--muted);">Log out</button></form>
   </nav>
@@ -104,9 +105,9 @@
   <div class="panel">
     <div class="panel-h"><h3>Recent orders</h3></div>
     <% if (!orders.length) { %><p class="sub" style="margin:0;">No orders yet.</p><% } else { %>
-    <table><thead><tr><th>#</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody>
+    <table><thead><tr><th>#</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Pay</th><th>Status</th></tr></thead><tbody>
       <% orders.slice(0,12).forEach(o => { let items=[]; try{items=JSON.parse(o.items_json||'[]');}catch(e){} %>
-        <tr><td>#<%= o.id %></td><td><%= fmtDate(o.created_at) %></td><td><%= o.name || o.email || '—' %><% if (o.pincode) { %> &middot; <%= o.pincode %><% } %></td><td><%= items.reduce((n,i)=>n+(i.qty||0),0) %></td><td><%= money(o.amount_total||0) %></td><td><span class="pill-tag on"><%= o.status %></span></td></tr>
+        <tr><td>#<%= o.id %></td><td><%= fmtDate(o.created_at) %></td><td><%= o.name || o.email || '—' %><% if (o.pincode) { %> &middot; <%= o.pincode %><% } %></td><td><%= items.reduce((n,i)=>n+(i.qty||0),0) %></td><td><%= money(o.amount_total||0) %></td><td><%= o.payment_method === 'cod' ? 'COD' : 'Online' %></td><td><span class="pill-tag <%= /pending/.test(o.status||'') ? '' : 'on' %>"><%= o.status %></span></td></tr>
       <% }) %>
     </tbody></table>
     <% } %>

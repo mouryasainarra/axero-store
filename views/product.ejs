@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= product.name %> — AXERO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<% if (payReady) { %><script src="https://checkout.razorpay.com/v1/checkout.js"></script><% } %>
+</head>
+<body>
+<div class="marquee">FREE DELIVERY OVER &#8377;2999 &nbsp;&bull;&nbsp; <b>STYLE THAT SPEAKS YOU</b> &nbsp;&bull;&nbsp; 7-DAY RETURNS</div>
+
+<header class="site"><div class="wrap bar">
+  <%- include('_logo', { size:'', href:'/' }) %>
+  <nav class="main">
+    <a href="/?gender=Men">Men</a><a href="/?gender=Women">Women</a><a href="/sale" class="sale-link">Sale</a>
+  </nav>
+  <div class="tools">
+    <button class="icbtn" id="searchBtn" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></button>
+    <button class="icbtn" id="wishBtn" aria-label="Wishlist"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.3-9.3-8.5C1 8 2.5 5 5.5 5c1.9 0 3.1 1 2.5 1 .6 0 1.8-1 3.5-1 3 0 4.5 3 2.8 6.5C19 15.7 12 20 12 20Z"/></svg><span class="badge" id="wishCount">0</span></button>
+    <button class="icbtn" id="bagBtn" aria-label="Open bag"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="badge" id="bagCount">0</span></button>
+  </div>
+</div>
+<div class="searchbar" id="searchBar"><form class="wrap" action="/" method="get">
+  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+  <input type="search" name="q" placeholder="Search for suits, tees, dresses…" autocomplete="off">
+  <button class="btn btn-primary" type="submit">Search</button>
+</form></div>
+</header>
+
+<% const sizes = (product.sizes||'').split(',').map(s=>s.trim()).filter(Boolean);
+   const off = product.compare_at ? Math.round((1 - product.price/product.compare_at)*100) : 0;
+   const soldOut = product.stock <= 0; %>
+
+<main class="wrap pdp">
+  <p class="breadcrumb">Home / <a href="/?gender=<%= product.gender %>" style="color:var(--cream);"><%= product.gender %></a> / <a href="/?gender=<%= product.gender %>&category=<%= encodeURIComponent(product.category) %>" style="color:var(--cream);"><%= product.category %></a> / <b><%= product.name %></b></p>
+  <div class="pdp-grid">
+    <div class="pdp-media">
+      <% if (product.image_url) { %><img src="<%= product.image_url %>" alt="<%= product.name %>"><% } else { %><div class="noimg big"><%= product.category %></div><% } %>
+      <% if (product.compare_at) { %><span class="ribbon big">-<%= off %>%</span><% } %>
+    </div>
+    <div class="pdp-info">
+      <p class="pdp-cat"><%= product.gender %> &bull; <%= product.category %></p>
+      <h1 class="pdp-name"><%= product.name %></h1>
+      <% if (summary) { %><p class="stars big"><%- '★'.repeat(Math.round(summary.avg)) %><span class="dim"><%- '★'.repeat(5-Math.round(summary.avg)) %></span> <small><%= summary.avg %> &middot; <%= summary.count %> review<%= summary.count===1?'':'s' %></small></p><% } %>
+      <div class="pdp-price"><b><%= money(product.price) %></b><% if (product.compare_at) { %><span class="was"><%= money(product.compare_at) %></span><span class="save">Save <%= money(product.compare_at - product.price) %></span><% } %></div>
+      <% if (product.description) { %><p class="pdp-desc"><%= product.description %></p><% } %>
+
+      <% if (soldOut) { %>
+        <div class="banner">This item is currently sold out.</div>
+      <% } else { %>
+        <div class="pdp-buy">
+          <label class="sizelbl">Size
+            <select id="size-<%= product.id %>"><% sizes.forEach(s=>{ %><option value="<%= s %>"><%= s %></option><% }) %></select>
+          </label>
+          <button class="btn btn-primary add" data-id="<%= product.id %>" data-name="<%= product.name.replace(/"/g,'&quot;') %>" data-price="<%= product.price %>" data-img="<%= product.image_url %>" data-size-select="size-<%= product.id %>">Add to bag</button>
+          <button class="btn btn-ghost heart-lg" data-wish data-id="<%= product.id %>" data-name="<%= product.name.replace(/"/g,'&quot;') %>" data-price="<%= product.price %>" data-img="<%= product.image_url %>">♥ Save</button>
+        </div>
+      <% } %>
+
+      <ul class="pdp-trust">
+        <li>✓ Free delivery over &#8377;2,999</li>
+        <li>✓ 7-day easy returns</li>
+        <li>✓ Cash on Delivery available</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- reviews -->
+  <section class="reviews" id="reviews">
+    <h2>Reviews <% if (summary) { %><span class="count"><%= summary.avg %> ★ · <%= summary.count %></span><% } %></h2>
+    <% if (!reviews.length) { %><p class="muted-sm">No reviews yet — be the first to review this product.</p><% } %>
+    <div class="review-list">
+      <% reviews.forEach(rv => { %>
+        <div class="review"><div class="rv-top"><b><%= rv.name %></b><span class="rv-stars"><%- '★'.repeat(rv.rating) %><span class="dim"><%- '★'.repeat(5-rv.rating) %></span></span></div><% if (rv.comment) { %><p><%= rv.comment %></p><% } %><small class="muted-sm"><%= fmtDate(rv.created_at) %></small></div>
+      <% }) %>
+    </div>
+    <form class="review-form" method="post" action="/product/<%= product.id %>/review">
+      <h4>Write a review</h4>
+      <div class="rate" id="rate">
+        <% for (let i=1;i<=5;i++){ %><button type="button" class="star" data-v="<%= i %>">★</button><% } %>
+      </div>
+      <input type="hidden" name="rating" id="ratingInput" value="5">
+      <input name="name" placeholder="Your name" maxlength="60">
+      <textarea name="comment" rows="3" placeholder="What did you think?" maxlength="800"></textarea>
+      <button class="btn btn-primary" type="submit">Submit review</button>
+    </form>
+  </section>
+
+  <% if (related.length) { %>
+  <section class="related">
+    <div class="section-head"><h2>You may also like</h2></div>
+    <div class="grid">
+      <% related.forEach(p => { const so = p.stock<=0; %>
+        <article class="card">
+          <a class="ph" href="/product/<%= p.id %>"><% if (p.image_url) { %><img src="<%= p.image_url %>" loading="lazy" alt="<%= p.name %>"><% } else { %><div class="noimg"><%= p.category %></div><% } %><% if (p.compare_at) { %><span class="ribbon">-<%= Math.round((1-p.price/p.compare_at)*100) %>%</span><% } %></a>
+          <div class="info"><a class="name" href="/product/<%= p.id %>"><%= p.name %></a><div class="price"><b><%= money(p.price) %></b><% if (p.compare_at) { %><span class="was"><%= money(p.compare_at) %></span><% } %></div></div>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
+</main>
+
+<%- include('_footer') %>
+<%- include('_drawer') %>
+<script>window.AXERO_PAY_READY = <%= payReady ? 'true':'false' %>; window.AXERO_COD = <%= COD_ENABLED ? 'true':'false' %>;</script>
+<script src="/js/cart.js"></script>
+</body>
+</html>

@@ -1,17 +1,21 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Thank you — AXERO</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/style.css"></head>
 <body>
+<% const isCod = order && order.payment_method === 'cod'; %>
 <header class="site"><div class="wrap bar"><%- include('_logo', { size:'', href:'/' }) %></div></header>
 <div class="success">
   <div class="check"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
-  <h1>Order confirmed</h1>
+  <h1><%= isCod ? 'Order placed' : 'Order confirmed' %></h1>
   <% if (order) { %>
-    <p>Thanks <%= order.name || '' %> — your payment went through.</p>
-    <p style="font-weight:700;font-size:1.3rem;margin-top:10px;" class="goldtext"><%= money(order.amount_total) %> paid</p>
-    <p style="margin-top:6px;">Order <strong>#<%= order.id %></strong><% if (order.email) { %> &middot; receipt sent to <strong><%= order.email %></strong><% } %></p>
+    <p>Thanks <%= order.name || '' %> — <%= isCod ? 'your Cash on Delivery order is confirmed.' : 'your payment went through.' %></p>
+    <p style="font-weight:700;font-size:1.3rem;margin-top:10px;" class="goldtext"><%= money(order.amount_total) %> <%= isCod ? 'to pay on delivery' : 'paid' %></p>
+    <p style="margin-top:6px;">Order <strong>#<%= order.id %></strong><% if (order.email) { %> &middot; confirmation sent to <strong><%= order.email %></strong><% } %></p>
+    <% if (order.discount_amount) { %><p class="muted-sm">Discount applied: &minus;<%= money(order.discount_amount) %><% if (order.discount_code) { %> (<%= order.discount_code %>)<% } %></p><% } %>
     <p style="color:var(--muted);margin-top:14px;">Delivering to <%= order.address %><% if (order.city) { %>, <%= order.city %><% } %> &mdash; <%= order.pincode %></p>
   <% } else { %>
-    <p>Thanks — your payment was successful.</p>
+    <p>Thanks — your order was placed successfully.</p>
   <% } %>
   <p style="margin-top:28px;"><a href="/" class="btn btn-ghost">Continue shopping</a></p>
 </div>
+<%- include('_footer') %>
+<script src="/js/cart.js"></script>
 </body></html>

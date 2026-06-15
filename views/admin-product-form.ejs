@@ -20,6 +20,7 @@
       <div class="field full"><label for="sizes">Sizes <span class="hint">comma-separated (e.g. S,M,L,XL,XXL or 28,30,32,34)</span></label><input id="sizes" name="sizes" value="<%= product ? product.sizes : 'S,M,L,XL,XXL' %>"></div>
       <div class="field full"><label for="description">Description <span class="hint">optional</span></label><textarea id="description" name="description" rows="3" placeholder="Fabric, fit notes, styling…"><%= product ? product.description : '' %></textarea></div>
       <div class="field check full"><input id="active" name="active" type="checkbox" <%= !product || product.active ? 'checked' : '' %>><label for="active" style="margin:0;">Live — show this product in the shop</label></div>
+      <div class="field check full"><input id="featured" name="featured" type="checkbox" <%= product && product.featured ? 'checked' : '' %>><label for="featured" style="margin:0;">Featured — show on the home page</label></div>
     </div>
     <div style="margin-top:22px;display:flex;gap:12px;"><button class="btn btn-primary" type="submit"><%= product ? 'Save changes' : 'Add product' %></button><a class="btn btn-ghost" href="/admin">Cancel</a></div>
   </form>
