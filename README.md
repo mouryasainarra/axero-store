@@ -1,58 +1,40 @@
-# AXERO — online store (India) with admin dashboard, Razorpay & Supabase
+# AXERO — premium Indian fashion store
 
-A complete, deployable two-sided fashion store:
-- **Entry screen** → customers choose **Men** or **Women**, then browse that collection.
-- **Storefront** — gendered categories, bag, delivery details, and payment by **UPI (PhonePe / Google Pay / Paytm), cards, net banking & wallets** via **Razorpay**, all in **INR (₹)**.
-- **Admin dashboard** — password-protected, with **Revenue, Profit (+ margin), Units sold, Inventory value**, a 7-day revenue chart, low/out-of-stock alerts, and full product management (with cost price for profit).
-- **Data lives in Supabase (managed PostgreSQL)** — persistent, backed up, and secure.
+Node.js + Express storefront with an admin dashboard, on Supabase (Postgres).
+Payments via Razorpay (UPI / PhonePe / GPay / cards) **and Cash on Delivery**.
 
----
+## What the customer site has
+- **Landing page** with Men / Women entry + a **Featured** row (toggle "Featured" on any product in admin).
+- **Product detail pages** (`/product/:id`) — big image, description, size picker, add-to-bag, related products.
+- **Search** (search icon in the header) and **Sort** (newest / price / name).
+- **Sale page** (`/sale`) and sale badges on any product with a "Was price".
+- **Customer reviews & ratings** — star rating shown on cards and product pages; visitors can post reviews.
+- **Wishlist** (heart icon) saved in the browser, with its own drawer.
+- **Discount codes** at checkout — create/manage them in admin under "Discount codes".
+- **Cash on Delivery** — orders work even before Razorpay is switched on.
+- **Newsletter signup** in the footer (stored in the `subscribers` table).
+- **Info pages**: `/page/about`, `/page/contact`, `/page/size-guide`, `/page/shipping`, `/page/returns`, `/page/privacy`, `/page/faq`.
+- **WhatsApp button** — appears when `WHATSAPP_NUMBER` is set.
 
-## 1. Create your Supabase database
-1. Sign up at https://supabase.com and create a new project (pick a region close to India, e.g. Mumbai/Singapore). Set a strong database password.
-2. Go to **Project Settings → Database → Connection string → URI**.
-3. Copy the URI (it looks like `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`).
+## Admin (`/admin`)
+- Sales dashboard, product add/edit/delete (with **Featured** + **Live** toggles).
+- Orders table now shows **Pay** (Online / COD) and order **status**.
+- **Discount codes** manager (percent or flat, optional minimum order).
 
-> Security note: this connection string is a **secret**. It stays in `.env` on your server only — never put it in frontend code or commit it to GitHub. Your app talks to Supabase **server-side**, so you don't use Supabase's public "anon" key or Row Level Security here — which avoids the most common Supabase mistake.
+## Setup
+1. `npm install`
+2. Copy `.env.example` to `.env` and fill in `DATABASE_URL` (Supabase → Settings → Database → **Session pooler** URI).
+3. `npm run seed` (optional — adds demo products, features 4, and a WELCOME10 code).
+4. `npm start` → http://localhost:3000
 
-## 2. Run it on your computer
-Install **Node.js 18+** (https://nodejs.org), then in this folder:
-```bash
-npm install
-cp .env.example .env      # then paste your Supabase URI into DATABASE_URL
-npm run seed              # (optional) load sample Men & Women products
-npm start
-```
-Open **http://localhost:3000** (store) and **http://localhost:3000/admin** (admin — default password `changeme`). The tables are created automatically in Supabase the first time it runs.
+## Environment variables
+- `DATABASE_URL` (required) — Supabase Session-pooler connection string.
+- `ADMIN_PASSWORD` — admin login. For production: `node make-password.js "yourpassword"` then set `ADMIN_PASSWORD_HASH`.
+- `SESSION_SECRET` — any long random string.
+- `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` — optional; enables online payment. COD works without them.
+- `COD_ENABLED` — `true` (default) / `false`.
+- `WHATSAPP_NUMBER` — country code + number, digits only (e.g. `9198XXXXXXXX`). Blank hides the button.
+- `SUPPORT_EMAIL` — shown on the Contact page.
+- `STORE_NAME`, `CURRENCY` (`inr`), `BASE_URL`.
 
-## 3. Add your products
-Log in to `/admin` → **+ Add product**. Set the **Collection** (Men/Women), category, **selling price**, **cost price** (used for profit), stock, sizes, and an **image URL**. Tick **Live** and save — it appears in the shop instantly. Delete the samples once you've added your own.
-
-## 4. Turn on payments (Razorpay)
-Razorpay needs an Indian business (bank account + KYC: PAN, etc.).
-1. Sign up at https://dashboard.razorpay.com and complete activation.
-2. **Settings → API Keys → Generate Key.** Put `RAZORPAY_KEY_ID` (`rzp_test_…` to test, `rzp_live_…` when live) and `RAZORPAY_KEY_SECRET` in `.env`.
-3. Set `BASE_URL` to your live site URL.
-The browser only sends product IDs + quantities; the server looks up real prices, creates a Razorpay order, opens the payment popup, and **verifies the signature** before saving the order.
-
-## 5. Secure the admin
-Run `node make-password.js "your-strong-password"`, put the printed `ADMIN_PASSWORD_HASH=…` in your environment (remove `ADMIN_PASSWORD`), and set a long random `SESSION_SECRET`.
-
-## 6. Deploy (hosting)
-Push to GitHub, then on **Render** (or Railway/Fly): New → Web Service → connect repo → Build `npm install`, Start `npm start`, and add all `.env` variables under Environment. Because the data lives in **Supabase**, you do **not** need a persistent disk — the host can be stateless and your data is safe in Supabase. After deploy, set `BASE_URL` to your live URL.
-
-## Your logo
-Included at `public/logo.png` (full lockup) and `public/logo_mark.png` (monogram). Overwrite with higher-res files anytime — no code changes needed.
-
-## File map
-```
-server.js                 Express app + routes (storefront, admin, Razorpay)
-db.js                     Supabase/Postgres data layer (pg)
-seed.js                   Sample products (npm run seed)
-make-password.js          Generate an admin password hash
-views/                    entry, shop, success, admin login/dashboard/form, _logo
-public/css/style.css      Styling (black/gold)
-public/js/cart.js         Bag + delivery + Razorpay checkout
-public/logo*.png          Your logo
-.env.example              Config template — copy to .env
-```
+The database tables (incl. `reviews`, `subscribers`, `discounts`, and new `orders`/`products` columns) are created/upgraded automatically on startup.
