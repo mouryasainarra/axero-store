@@ -44,13 +44,26 @@
   <p class="breadcrumb">Home / <a href="/?gender=<%= product.gender %>" style="color:var(--cream);"><%= product.gender %></a> / <a href="/?gender=<%= product.gender %>&category=<%= encodeURIComponent(product.category) %>" style="color:var(--cream);"><%= product.category %></a> / <b><%= product.name %></b></p>
   <div class="pdp-grid">
     <div class="pdp-media">
-      <div class="pdp-main">
-        <% if (gallery.length) { %><img id="pdpMain" src="<%= gallery[0] %>" alt="<%= product.name %>"><% } else { %><div class="noimg big"><%= product.category %></div><% } %>
-        <% if (product.compare_at) { %><span class="ribbon big">-<%= off %>%</span><% } %>
-      </div>
-      <% if (gallery.length > 1) { %>
-      <div class="pdp-thumbs">
-        <% gallery.forEach((u,i)=>{ %><button type="button" class="pdp-thumb <%= i===0?'on':'' %>" data-src="<%= u %>"><img src="<%= u %>" alt="" loading="lazy"></button><% }) %>
+      <% if (!gallery.length) { %>
+        <div class="g-stage"><div class="g-track"><div class="g-slide"><div class="noimg big"><%= product.category %></div></div></div></div>
+      <% } else { %>
+      <div class="gallery">
+        <% if (gallery.length > 1) { %>
+        <div class="g-thumbs">
+          <% gallery.forEach((u,i)=>{ %><button type="button" class="g-thumb <%= i===0?'on':'' %>" data-i="<%= i %>"><img src="<%= u %>" alt="" loading="lazy"></button><% }) %>
+        </div>
+        <% } %>
+        <div class="g-stage">
+          <div class="g-track" id="gTrack">
+            <% gallery.forEach((u,i)=>{ %><div class="g-slide"><img src="<%= u %>" alt="<%= product.name %>" <%= i>0?'loading="lazy"':'' %>></div><% }) %>
+          </div>
+          <% if (product.compare_at) { %><span class="ribbon big">-<%= off %>%</span><% } %>
+          <% if (gallery.length > 1) { %>
+          <div class="g-dots">
+            <% gallery.forEach((u,i)=>{ %><button type="button" class="g-dot <%= i===0?'on':'' %>" data-i="<%= i %>" aria-label="Image <%= i+1 %>"></button><% }) %>
+          </div>
+          <% } %>
+        </div>
       </div>
       <% } %>
     </div>
@@ -130,8 +143,20 @@
 <%- include('_footer') %>
 <%- include('_drawer') %>
 <script>
-(function(){var m=document.getElementById('pdpMain');if(!m)return;
-document.querySelectorAll('.pdp-thumb').forEach(function(t){t.addEventListener('click',function(){m.src=t.dataset.src;document.querySelectorAll('.pdp-thumb').forEach(function(x){x.classList.remove('on');});t.classList.add('on');});});})();
+(function(){
+  var track=document.getElementById('gTrack'); if(!track) return;
+  var slides=track.querySelectorAll('.g-slide');
+  var thumbs=document.querySelectorAll('.g-thumb');
+  var dots=document.querySelectorAll('.g-dot');
+  function setActive(i){
+    thumbs.forEach(function(t,k){ t.classList.toggle('on', k===i); });
+    dots.forEach(function(d,k){ d.classList.toggle('on', k===i); });
+  }
+  function go(i){ track.scrollTo({ left: i*track.clientWidth, behavior:'smooth' }); setActive(i); }
+  thumbs.forEach(function(t){ t.addEventListener('click', function(){ go(Number(t.dataset.i)); }); });
+  dots.forEach(function(d){ d.addEventListener('click', function(){ go(Number(d.dataset.i)); }); });
+  var to; track.addEventListener('scroll', function(){ clearTimeout(to); to=setTimeout(function(){ setActive(Math.round(track.scrollLeft/track.clientWidth)); }, 90); });
+})();
 </script>
 <script>window.AXERO_PAY_READY = <%= payReady ? 'true':'false' %>; window.AXERO_COD = <%= COD_ENABLED ? 'true':'false' %>;</script>
 <script src="/js/cart.js"></script>
