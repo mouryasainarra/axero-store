@@ -6,6 +6,9 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const path = require('path');
 const db = require('./db');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 8 } });
+function uploadPhotos(req, res, next){ upload.array('photos', 8)(req, res, function(err){ if (err) { req.uploadError = err.message; } next(); }); }
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,7 +97,8 @@ app.get('/product/:id', async (req, res, next) => {
       ? { avg: Math.round((reviews.reduce((n,r)=>n+r.rating,0)/reviews.length)*10)/10, count: reviews.length }
       : null;
     const related = attachRatings(await db.relatedProducts(product, 4), await db.allRatings());
-    res.render('product', { product, reviews, summary, related, gender: product.gender });
+    const uploaded = await db.getProductImages(product.id);
+    res.render('product', { product, reviews, summary, related, gender: product.gender, uploaded });
   } catch (e) { next(e); }
 });
 
@@ -201,6 +205,16 @@ app.post('/api/cod-order', async (req, res) => {
   } catch (err) { console.error('COD error:', err.message); res.status(500).json({ error: 'Could not place order. Please try again.' }); }
 });
 
+app.get('/img/:id', async (req, res) => {
+  try {
+    const img = await db.getImage(req.params.id);
+    if (!img || !img.data) return res.status(404).send('Not found');
+    res.set('Content-Type', img.mime || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(img.data);
+  } catch (e) { res.status(404).send('Not found'); }
+});
+
 app.get('/success', async (req, res, next) => {
   try { res.render('success', { order: req.query.id ? await db.getOrder(req.query.id) : null }); }
   catch (e) { next(e); }
@@ -288,9 +302,9 @@ app.get('/admin', requireAdmin, async (req, res, next) => {
     res.render('admin-dashboard', { products, orders, stats: buildStats(products, orders) });
   } catch (e) { next(e); }
 });
-app.get('/admin/products/new', requireAdmin, (req, res) => res.render('admin-product-form', { product: null }));
+app.get('/admin/products/new', requireAdmin, (req, res) => res.render('admin-product-form', { product: null, uploaded: [] }));
 app.get('/admin/products/:id/edit', requireAdmin, async (req, res, next) => {
-  try { const product = await db.getProduct(req.params.id); if (!product) return res.redirect('/admin'); res.render('admin-product-form', { product }); }
+  try { const product = await db.getProduct(req.params.id); if (!product) return res.redirect('/admin'); const uploaded = await db.getProductImages(product.id); res.render('admin-product-form', { product, uploaded }); }
   catch (e) { next(e); }
 });
 function parseForm(b){
@@ -300,17 +314,48 @@ function parseForm(b){
     cost: b.cost ? Math.round(parseFloat(b.cost)*100) : 0,
     compare_at: b.compare_at ? Math.round(parseFloat(b.compare_at)*100) : null,
     image_url: (b.image_url||'').trim(), sizes: (b.sizes||'').trim() || 'S,M,L,XL,XXL',
-    stock: parseInt(b.stock||0,10), active: b.active ? 1 : 0, featured: b.featured ? 1 : 0 };
+    stock: parseInt(b.stock||0,10), active: b.active ? 1 : 0, featured: b.featured ? 1 : 0,
+    images: (b.images||'').trim(), material: (b.material||'').trim(), fit: (b.fit||'').trim(),
+    care: (b.care||'').trim(), details: (b.details||'').trim() };
 }
-app.post('/admin/products', requireAdmin, async (req, res, next) => {
-  try { const d = parseForm(req.body); if (!d.name || !d.price) return res.redirect('/admin/products/new'); await db.createProduct(d); res.redirect('/admin'); }
+async function saveUploads(productId, files){
+  const ids = [];
+  for (const f of (files || [])) {
+    if (!f.mimetype || !f.mimetype.startsWith('image/')) continue;
+    const row = await db.addImage(productId, f.mimetype, f.buffer);
+    if (row) ids.push(row.id);
+  }
+  return ids;
+}
+// if a product has uploaded images and no manual main URL, use the first uploaded image as the card image
+async function refreshPrimaryImage(productId){
+  const imgs = await db.getProductImages(productId);
+  const p = await db.getProduct(productId);
+  if (imgs.length && (!p.image_url || p.image_url.startsWith('/img/'))) {
+    if (p.image_url !== '/img/' + imgs[0].id) { p.image_url = '/img/' + imgs[0].id; await db.updateProduct(productId, p); }
+  } else if (!imgs.length && p.image_url && p.image_url.startsWith('/img/')) {
+    p.image_url = ''; await db.updateProduct(productId, p);
+  }
+}
+app.post('/admin/products', requireAdmin, uploadPhotos, async (req, res, next) => {
+  try { const d = parseForm(req.body); if (!d.name || !d.price) return res.redirect('/admin/products/new');
+    const row = await db.createProduct(d);
+    if (row && row.id) { await saveUploads(row.id, req.files); await refreshPrimaryImage(row.id); }
+    res.redirect('/admin'); }
   catch (e) { next(e); }
 });
-app.post('/admin/products/:id', requireAdmin, async (req, res, next) => {
-  try { await db.updateProduct(req.params.id, parseForm(req.body)); res.redirect('/admin'); } catch (e) { next(e); }
+app.post('/admin/products/:id', requireAdmin, uploadPhotos, async (req, res, next) => {
+  try {
+    await db.updateProduct(req.params.id, parseForm(req.body));
+    let rm = req.body.remove_img; if (rm && !Array.isArray(rm)) rm = [rm];
+    for (const id of (rm || [])) await db.deleteImage(id);
+    await saveUploads(req.params.id, req.files);
+    await refreshPrimaryImage(req.params.id);
+    res.redirect('/admin');
+  } catch (e) { next(e); }
 });
 app.post('/admin/products/:id/delete', requireAdmin, async (req, res, next) => {
-  try { await db.deleteProduct(req.params.id); res.redirect('/admin'); } catch (e) { next(e); }
+  try { await db.deleteProductImages(req.params.id); await db.deleteProduct(req.params.id); res.redirect('/admin'); } catch (e) { next(e); }
 });
 
 app.get('/admin/discounts', requireAdmin, async (req, res, next) => {

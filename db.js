@@ -35,12 +35,20 @@ const ready = (async () => {
     CREATE TABLE IF NOT EXISTS subscribers (
       id SERIAL PRIMARY KEY, email TEXT UNIQUE, created_at TIMESTAMPTZ DEFAULT now()
     );
+    CREATE TABLE IF NOT EXISTS product_images (
+      id SERIAL PRIMARY KEY, product_id INTEGER, mime TEXT, data BYTEA, created_at TIMESTAMPTZ DEFAULT now()
+    );
     CREATE TABLE IF NOT EXISTS discounts (
       id SERIAL PRIMARY KEY, code TEXT UNIQUE, type TEXT DEFAULT 'percent',
       value INTEGER NOT NULL, min_amount INTEGER DEFAULT 0,
       active INTEGER NOT NULL DEFAULT 1, created_at TIMESTAMPTZ DEFAULT now()
     );
     ALTER TABLE products ADD COLUMN IF NOT EXISTS featured INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS images TEXT DEFAULT '';
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS material TEXT DEFAULT '';
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS fit TEXT DEFAULT '';
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS care TEXT DEFAULT '';
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS details TEXT DEFAULT '';
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'online';
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code TEXT;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount INTEGER DEFAULT 0;
@@ -69,14 +77,21 @@ module.exports = {
     return rows.concat(more);
   },
   async createProduct(p){ return (await q(
-    `INSERT INTO products (name,category,gender,description,price,cost,compare_at,image_url,sizes,stock,active,featured)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
-    [p.name,p.category,p.gender,p.description,p.price,p.cost,p.compare_at,p.image_url,p.sizes,p.stock,p.active,p.featured||0])).rows[0]; },
+    `INSERT INTO products (name,category,gender,description,price,cost,compare_at,image_url,sizes,stock,active,featured,images,material,fit,care,details)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,
+    [p.name,p.category,p.gender,p.description,p.price,p.cost,p.compare_at,p.image_url,p.sizes,p.stock,p.active,p.featured||0,p.images||'',p.material||'',p.fit||'',p.care||'',p.details||''])).rows[0]; },
   async updateProduct(id,p){ return q(
-    `UPDATE products SET name=$1,category=$2,gender=$3,description=$4,price=$5,cost=$6,compare_at=$7,image_url=$8,sizes=$9,stock=$10,active=$11,featured=$12 WHERE id=$13`,
-    [p.name,p.category,p.gender,p.description,p.price,p.cost,p.compare_at,p.image_url,p.sizes,p.stock,p.active,p.featured||0,id]); },
+    `UPDATE products SET name=$1,category=$2,gender=$3,description=$4,price=$5,cost=$6,compare_at=$7,image_url=$8,sizes=$9,stock=$10,active=$11,featured=$12,images=$13,material=$14,fit=$15,care=$16,details=$17 WHERE id=$18`,
+    [p.name,p.category,p.gender,p.description,p.price,p.cost,p.compare_at,p.image_url,p.sizes,p.stock,p.active,p.featured||0,p.images||'',p.material||'',p.fit||'',p.care||'',p.details||'',id]); },
   async deleteProduct(id){ return q('DELETE FROM products WHERE id=$1', [id]); },
   async decrementStock(id,qty){ return q('UPDATE products SET stock=GREATEST(stock-$1,0) WHERE id=$2', [qty,id]); },
+
+  // ---- uploaded product images (stored in DB, served at /img/:id) ----
+  async addImage(productId, mime, buffer){ return (await q('INSERT INTO product_images (product_id,mime,data) VALUES ($1,$2,$3) RETURNING id', [productId, mime, buffer])).rows[0]; },
+  async getProductImages(productId){ return (await q('SELECT id, mime FROM product_images WHERE product_id=$1 ORDER BY id', [productId])).rows; },
+  async getImage(id){ return (await q('SELECT mime, data FROM product_images WHERE id=$1', [id])).rows[0]; },
+  async deleteImage(id){ return q('DELETE FROM product_images WHERE id=$1', [id]); },
+  async deleteProductImages(productId){ return q('DELETE FROM product_images WHERE product_id=$1', [productId]); },
 
   async getReviews(productId){ return (await q('SELECT * FROM reviews WHERE product_id=$1 ORDER BY created_at DESC', [productId])).rows; },
   async addReview(r){ return q('INSERT INTO reviews (product_id,name,rating,comment) VALUES ($1,$2,$3,$4)', [r.product_id,r.name,r.rating,r.comment]); },
