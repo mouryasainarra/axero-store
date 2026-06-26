@@ -30,14 +30,27 @@
 
 <% const sizes = (product.sizes||'').split(',').map(s=>s.trim()).filter(Boolean);
    const off = product.compare_at ? Math.round((1 - product.price/product.compare_at)*100) : 0;
-   const soldOut = product.stock <= 0; %>
+   const soldOut = product.stock <= 0;
+   let gallery = [];
+   (typeof uploaded !== 'undefined' ? uploaded : []).forEach(im => gallery.push('/img/' + im.id));
+   if (product.image_url && gallery.indexOf(product.image_url) === -1) gallery.push(product.image_url);
+   (product.images||'').split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).forEach(u=>{ if(!gallery.includes(u)) gallery.push(u); });
+   const detailLines = (product.details||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
+   const hasSpecs = product.material || product.fit || product.care || detailLines.length; %>
 
 <main class="wrap pdp">
   <p class="breadcrumb">Home / <a href="/?gender=<%= product.gender %>" style="color:var(--cream);"><%= product.gender %></a> / <a href="/?gender=<%= product.gender %>&category=<%= encodeURIComponent(product.category) %>" style="color:var(--cream);"><%= product.category %></a> / <b><%= product.name %></b></p>
   <div class="pdp-grid">
     <div class="pdp-media">
-      <% if (product.image_url) { %><img src="<%= product.image_url %>" alt="<%= product.name %>"><% } else { %><div class="noimg big"><%= product.category %></div><% } %>
-      <% if (product.compare_at) { %><span class="ribbon big">-<%= off %>%</span><% } %>
+      <div class="pdp-main">
+        <% if (gallery.length) { %><img id="pdpMain" src="<%= gallery[0] %>" alt="<%= product.name %>"><% } else { %><div class="noimg big"><%= product.category %></div><% } %>
+        <% if (product.compare_at) { %><span class="ribbon big">-<%= off %>%</span><% } %>
+      </div>
+      <% if (gallery.length > 1) { %>
+      <div class="pdp-thumbs">
+        <% gallery.forEach((u,i)=>{ %><button type="button" class="pdp-thumb <%= i===0?'on':'' %>" data-src="<%= u %>"><img src="<%= u %>" alt="" loading="lazy"></button><% }) %>
+      </div>
+      <% } %>
     </div>
     <div class="pdp-info">
       <p class="pdp-cat"><%= product.gender %> &bull; <%= product.category %></p>
@@ -61,6 +74,19 @@
         <li>✓ 7-day easy returns</li>
         <li>✓ Cash on Delivery available</li>
       </ul>
+      <% if (hasSpecs) { %>
+      <div class="pdp-specs">
+        <h3>Product details</h3>
+        <% if (detailLines.length) { %><ul class="spec-list"><% detailLines.forEach(d=>{ %><li><%= d %></li><% }) %></ul><% } %>
+        <% if (product.material || product.fit || product.care) { %>
+        <table class="spec-table">
+          <% if (product.material) { %><tr><th>Material</th><td><%= product.material %></td></tr><% } %>
+          <% if (product.fit) { %><tr><th>Fit</th><td><%= product.fit %></td></tr><% } %>
+          <% if (product.care) { %><tr><th>Care</th><td><%= product.care %></td></tr><% } %>
+        </table>
+        <% } %>
+      </div>
+      <% } %>
     </div>
   </div>
 
@@ -101,6 +127,10 @@
 
 <%- include('_footer') %>
 <%- include('_drawer') %>
+<script>
+(function(){var m=document.getElementById('pdpMain');if(!m)return;
+document.querySelectorAll('.pdp-thumb').forEach(function(t){t.addEventListener('click',function(){m.src=t.dataset.src;document.querySelectorAll('.pdp-thumb').forEach(function(x){x.classList.remove('on');});t.classList.add('on');});});})();
+</script>
 <script>window.AXERO_PAY_READY = <%= payReady ? 'true':'false' %>; window.AXERO_COD = <%= COD_ENABLED ? 'true':'false' %>;</script>
 <script src="/js/cart.js"></script>
 </body>
