@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
+<script>(function(){try{var t=localStorage.getItem('axero_theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <% if (payReady) { %><script src="https://checkout.razorpay.com/v1/checkout.js"></script><% } %>
 </head>
 <body>
@@ -20,6 +21,7 @@
     <a href="/sale" class="sale-link <%= mode==='sale' ? 'active' : '' %>">Sale</a>
   </nav>
   <div class="tools">
+    <button class="icbtn theme-toggle" id="themeBtn" aria-label="Switch light/dark theme"><svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M16.9 16.9l2.1 2.1M19.1 4.9l-2.1 2.1M7.1 16.9l-2.1 2.1"/></svg><svg class="moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg></button>
     <button class="icbtn" id="searchBtn" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></button>
     <span class="gender-switch">
       <a href="/?gender=Men" class="<%= gender === 'Men' && mode!=='sale' ? 'on' : '' %>">Men</a>
