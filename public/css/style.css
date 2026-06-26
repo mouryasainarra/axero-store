@@ -485,3 +485,29 @@ img{max-width:100%;}
 .img-cell img{width:90px;height:112px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;}
 .img-cell .rmtag{display:flex;align-items:center;gap:4px;justify-content:center;font-size:.72rem;color:var(--muted);margin-top:4px;}
 input[type="file"]{font-family:inherit;font-size:.85rem;}
+
+/* ============ light / dark theme ============ */
+:root[data-theme="light"]{
+  --bg:#F6F3EC; --panel:#FFFFFF; --panel2:#F1ECE2; --card:#FFFFFF;
+  --cream:#1B1813; --muted:#6F665A; --line:#E4DDD0;
+  --gold:#A8842F; --gold-2:#C9A24B; --gold-deep:#8A6B28;
+}
+html{transition:background .25s ease;}
+body{transition:background .25s ease,color .25s ease;}
+/* light-mode polish for surfaces that used baked-in dark tones */
+:root[data-theme="light"] .marquee{background:#1B1813;color:#F6F3EC;}
+:root[data-theme="light"] .card .heart{background:rgba(255,255,255,.7);}
+:root[data-theme="light"] .card .heart svg{stroke:#1B1813;}
+:root[data-theme="light"] .btn-primary{color:#1B1813;}
+:root[data-theme="light"] .entry{background:#11100E;}  /* keep entry dramatic in both modes */
+
+/* theme toggle button: sun shows in dark mode (tap for light), moon in light mode */
+.theme-toggle .moon{display:none;}
+:root[data-theme="light"] .theme-toggle .sun{display:none;}
+:root[data-theme="light"] .theme-toggle .moon{display:block;}
+
+/* ============ premium product image sizing ============ */
+/* keep the detail image a tidy, cropped frame (not a giant full-height photo) */
+.pdp-media{max-width:480px;width:100%;}
+.pdp-grid{align-items:start;}
+@media (min-width:861px){ .pdp-grid{grid-template-columns:480px 1fr;} }
