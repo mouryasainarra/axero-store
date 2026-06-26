@@ -10,9 +10,7 @@
 <% if (payReady) { %><script src="https://checkout.razorpay.com/v1/checkout.js"></script><% } %>
 </head>
 <body>
-
 <div class="marquee">FREE DELIVERY OVER &#8377;2999 &nbsp;&bull;&nbsp; <b>STYLE THAT SPEAKS YOU</b> &nbsp;&bull;&nbsp; 7-DAY RETURNS</div>
-
 <header class="site"><div class="wrap bar">
   <%- include('_logo', { size:'', href:'/' }) %>
   <nav class="main">
@@ -45,7 +43,6 @@
 
 <% if (mode === 'shop') { %>
 <section class="hero"><div class="wrap">
-  <img class="hero-logo" src="/logo.png" alt="AXERO">
   <p class="eyebrow"><%= gender %> &mdash; <%= cats.join(' • ') %></p>
   <p class="tagline">Style that speaks you</p>
   <div><a href="#shop" class="btn btn-primary">Shop <%= gender %></a></div>
@@ -120,7 +117,6 @@
 
 <%- include('_footer') %>
 <%- include('_drawer') %>
-
 <script>window.AXERO_PAY_READY = <%= payReady ? 'true' : 'false' %>; window.AXERO_COD = <%= COD_ENABLED ? 'true':'false' %>;</script>
 <script src="/js/cart.js"></script>
 </body>

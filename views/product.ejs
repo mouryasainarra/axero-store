@@ -10,7 +10,6 @@
 </head>
 <body>
 <div class="marquee">FREE DELIVERY OVER &#8377;2999 &nbsp;&bull;&nbsp; <b>STYLE THAT SPEAKS YOU</b> &nbsp;&bull;&nbsp; 7-DAY RETURNS</div>
-
 <header class="site"><div class="wrap bar">
   <%- include('_logo', { size:'', href:'/' }) %>
   <nav class="main">
@@ -46,7 +45,6 @@
       <% if (summary) { %><p class="stars big"><%- '★'.repeat(Math.round(summary.avg)) %><span class="dim"><%- '★'.repeat(5-Math.round(summary.avg)) %></span> <small><%= summary.avg %> &middot; <%= summary.count %> review<%= summary.count===1?'':'s' %></small></p><% } %>
       <div class="pdp-price"><b><%= money(product.price) %></b><% if (product.compare_at) { %><span class="was"><%= money(product.compare_at) %></span><span class="save">Save <%= money(product.compare_at - product.price) %></span><% } %></div>
       <% if (product.description) { %><p class="pdp-desc"><%= product.description %></p><% } %>
-
       <% if (soldOut) { %>
         <div class="banner">This item is currently sold out.</div>
       <% } else { %>
@@ -58,7 +56,6 @@
           <button class="btn btn-ghost heart-lg" data-wish data-id="<%= product.id %>" data-name="<%= product.name.replace(/"/g,'&quot;') %>" data-price="<%= product.price %>" data-img="<%= product.image_url %>">♥ Save</button>
         </div>
       <% } %>
-
       <ul class="pdp-trust">
         <li>✓ Free delivery over &#8377;2,999</li>
         <li>✓ 7-day easy returns</li>
@@ -67,7 +64,6 @@
     </div>
   </div>
 
-  <!-- reviews -->
   <section class="reviews" id="reviews">
     <h2>Reviews <% if (summary) { %><span class="count"><%= summary.avg %> ★ · <%= summary.count %></span><% } %></h2>
     <% if (!reviews.length) { %><p class="muted-sm">No reviews yet — be the first to review this product.</p><% } %>

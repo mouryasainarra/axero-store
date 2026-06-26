@@ -7,7 +7,6 @@
 <div class="admin-wrap" style="max-width:900px;">
   <h1 class="admin-h">Discount codes</h1>
   <p class="sub">Create codes customers can enter at checkout. Percentage off the order, or a flat amount off.</p>
-
   <form class="panel" method="POST" action="/admin/discounts">
     <div class="form-grid">
       <div class="field"><label for="code">Code</label><input id="code" name="code" required placeholder="WELCOME10" style="text-transform:uppercase;"></div>
@@ -17,7 +16,6 @@
     </div>
     <div style="margin-top:18px;"><button class="btn btn-primary" type="submit">Add code</button></div>
   </form>
-
   <div class="panel" style="margin-top:22px;">
     <table class="tbl"><thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min order</th><th></th></tr></thead><tbody>
       <% if (!discounts.length) { %><tr><td colspan="5" style="color:var(--muted);">No codes yet.</td></tr><% } %>
