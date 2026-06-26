@@ -40,7 +40,6 @@ const ready = (async () => {
       value INTEGER NOT NULL, min_amount INTEGER DEFAULT 0,
       active INTEGER NOT NULL DEFAULT 1, created_at TIMESTAMPTZ DEFAULT now()
     );
-    -- columns added for COD / discounts (safe if already present)
     ALTER TABLE products ADD COLUMN IF NOT EXISTS featured INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'online';
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code TEXT;
@@ -52,7 +51,6 @@ async function q(text, params) { await ready; return pool.query(text, params); }
 
 module.exports = {
   ready,
-  // ---- products ----
   async allProducts(){ return (await q('SELECT * FROM products ORDER BY created_at DESC, id DESC')).rows; },
   async activeProducts(){ return (await q('SELECT * FROM products WHERE active=1 ORDER BY created_at DESC, id DESC')).rows; },
   async getProduct(id){ return (await q('SELECT * FROM products WHERE id=$1', [id])).rows[0]; },
@@ -80,7 +78,6 @@ module.exports = {
   async deleteProduct(id){ return q('DELETE FROM products WHERE id=$1', [id]); },
   async decrementStock(id,qty){ return q('UPDATE products SET stock=GREATEST(stock-$1,0) WHERE id=$2', [qty,id]); },
 
-  // ---- reviews ----
   async getReviews(productId){ return (await q('SELECT * FROM reviews WHERE product_id=$1 ORDER BY created_at DESC', [productId])).rows; },
   async addReview(r){ return q('INSERT INTO reviews (product_id,name,rating,comment) VALUES ($1,$2,$3,$4)', [r.product_id,r.name,r.rating,r.comment]); },
   async allRatings(){
@@ -89,23 +86,19 @@ module.exports = {
     return map;
   },
 
-  // ---- newsletter ----
   async addSubscriber(email){ return q('INSERT INTO subscribers (email) VALUES ($1) ON CONFLICT (email) DO NOTHING', [email]); },
   async allSubscribers(){ return (await q('SELECT * FROM subscribers ORDER BY created_at DESC')).rows; },
 
-  // ---- discounts ----
   async getDiscount(code){ return (await q('SELECT * FROM discounts WHERE UPPER(code)=UPPER($1) AND active=1', [code])).rows[0]; },
   async allDiscounts(){ return (await q('SELECT * FROM discounts ORDER BY created_at DESC')).rows; },
   async createDiscount(d){ return q('INSERT INTO discounts (code,type,value,min_amount,active) VALUES (UPPER($1),$2,$3,$4,$5) ON CONFLICT (code) DO UPDATE SET type=$2,value=$3,min_amount=$4,active=$5',
     [d.code,d.type,d.value,d.min_amount||0,d.active]); },
   async deleteDiscount(id){ return q('DELETE FROM discounts WHERE id=$1', [id]); },
 
-  // ---- pending (online) ----
   async createPending(o){ return q('INSERT INTO pending_orders (rzp_order_id,amount,items_json,shipping_json) VALUES ($1,$2,$3,$4)', [o.rzp_order_id,o.amount,o.items_json,o.shipping_json]); },
   async getPending(id){ return (await q('SELECT * FROM pending_orders WHERE rzp_order_id=$1', [id])).rows[0]; },
   async deletePending(id){ return q('DELETE FROM pending_orders WHERE rzp_order_id=$1', [id]); },
 
-  // ---- orders ----
   async createOrder(o){ return (await q(
     `INSERT INTO orders (rzp_order_id,rzp_payment_id,name,email,phone,address,city,pincode,amount_total,currency,status,items_json,payment_method,discount_code,discount_amount)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)

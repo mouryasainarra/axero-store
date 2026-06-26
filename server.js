@@ -15,10 +15,9 @@ const razorpay = (KEY_ID && KEY_SECRET) ? new (require('razorpay'))({ key_id: KE
 const CURRENCY = (process.env.CURRENCY || 'inr').toUpperCase();
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const STORE_NAME = process.env.STORE_NAME || 'Axero';
-const WHATSAPP = (process.env.WHATSAPP_NUMBER || '').replace(/[^0-9]/g, ''); // digits only, with country code e.g. 9198...
+const WHATSAPP = (process.env.WHATSAPP_NUMBER || '').replace(/[^0-9]/g, '');
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || '';
 const COD_ENABLED = (process.env.COD_ENABLED || 'true') !== 'false';
-const FREE_SHIP_OVER = parseInt(process.env.FREE_SHIP_OVER || '299900', 10); // paise
 
 const CATS = {
   Men: ['Suits', 'Sportswear', 'Oversized T-Shirts', 'Printed Jeans'],
@@ -50,17 +49,14 @@ function sortProducts(list, sort){
   if (sort === 'price-asc') a.sort((x,y)=>x.price-y.price);
   else if (sort === 'price-desc') a.sort((x,y)=>y.price-x.price);
   else if (sort === 'name') a.sort((x,y)=>(x.name||'').localeCompare(y.name||''));
-  return a; // default = newest (already ordered)
+  return a;
 }
 function attachRatings(list, ratings){ list.forEach(p => { p.rating = ratings[p.id] || null; }); return list; }
 
-// ---------------- storefront ----------------
 app.get('/', async (req, res, next) => {
   try {
     const gender = ['Men', 'Women'].includes(req.query.gender) ? req.query.gender : null;
     const qstr = (req.query.q || '').trim();
-
-    // search results (gender optional)
     if (qstr) {
       let results = await db.searchProducts(qstr);
       const ratings = await db.allRatings();
@@ -68,12 +64,10 @@ app.get('/', async (req, res, next) => {
       return res.render('shop', { mode:'search', q:qstr, products: results, gender: gender || 'Men',
         category:'All', cats: CATS[gender || 'Men'], sort:req.query.sort || '' });
     }
-
     if (!gender) {
       const featured = attachRatings(await db.featuredProducts(8), await db.allRatings());
       return res.render('entry', { featured });
     }
-
     const cats = CATS[gender];
     const category = req.query.category && cats.includes(req.query.category) ? req.query.category : 'All';
     let products = (await db.activeProducts()).filter(p => (p.gender || 'Men') === gender);
@@ -116,7 +110,6 @@ app.post('/product/:id/review', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// ---- discount validation (used by checkout UI) ----
 async function discountFor(code, amount){
   if (!code) return { amount: 0, code: null };
   const d = await db.getDiscount(code.trim());
@@ -135,7 +128,6 @@ app.post('/api/apply-code', async (req, res) => {
   } catch (e) { res.json({ ok:false, error:'Could not check code.' }); }
 });
 
-// build server-trusted line items from a cart
 async function buildItems(cart){
   let amount = 0; const items = [];
   for (const entry of (cart || [])) {
@@ -149,7 +141,6 @@ async function buildItems(cart){
 }
 function validShipping(s){ return s && s.name && s.phone && s.address && s.pincode; }
 
-// ---- online checkout (Razorpay) ----
 app.post('/api/checkout', async (req, res) => {
   if (!razorpay) return res.status(503).json({ error: 'Online payment is not switched on yet.' });
   try {
@@ -193,7 +184,6 @@ app.post('/api/verify', async (req, res) => {
   } catch (err) { console.error('Verify error:', err.message); res.status(500).json({ error: 'Could not confirm payment.' }); }
 });
 
-// ---- Cash on Delivery (no Razorpay needed) ----
 app.post('/api/cod-order', async (req, res) => {
   if (!COD_ENABLED) return res.status(503).json({ error: 'Cash on Delivery is not available.' });
   try {
@@ -216,7 +206,6 @@ app.get('/success', async (req, res, next) => {
   catch (e) { next(e); }
 });
 
-// ---- newsletter ----
 app.post('/api/newsletter', async (req, res) => {
   try {
     const email = (req.body.email || '').trim().toLowerCase();
@@ -226,7 +215,6 @@ app.post('/api/newsletter', async (req, res) => {
   } catch (e) { res.json({ ok:false, error:'Could not subscribe.' }); }
 });
 
-// ---- info pages ----
 const PAGES = {
   about: { title:'About AXERO', body:`<p>AXERO is an Indian fashion label built on one belief — <strong>style that speaks you</strong>. From sharp suits to everyday oversized tees, every piece is designed in India with a global eye for detail.</p><p>We focus on premium fabric, a modern fit, and unique prints you won\u2019t find everywhere. Indian brand, global vision.</p>` },
   contact: { title:'Contact us', body:`<p>We\u2019d love to hear from you. Our team usually replies within 24 hours.</p><ul class="plain">__CONTACT__</ul>` },
@@ -257,7 +245,6 @@ app.get('/page/:slug', (req, res) => {
   res.render('page', { title: p.title, body });
 });
 
-// ---------------- admin ----------------
 function requireAdmin(req, res, next){ if (req.session.isAdmin) return next(); res.redirect('/admin/login'); }
 app.get('/admin/login', (req, res) => res.render('admin-login', { error: null }));
 app.post('/admin/login', (req, res) => {
@@ -326,7 +313,6 @@ app.post('/admin/products/:id/delete', requireAdmin, async (req, res, next) => {
   try { await db.deleteProduct(req.params.id); res.redirect('/admin'); } catch (e) { next(e); }
 });
 
-// admin: discount codes
 app.get('/admin/discounts', requireAdmin, async (req, res, next) => {
   try { res.render('admin-discounts', { discounts: await db.allDiscounts() }); } catch (e) { next(e); }
 });
@@ -336,7 +322,7 @@ app.post('/admin/discounts', requireAdmin, async (req, res, next) => {
     const type = req.body.type === 'flat' ? 'flat' : 'percent';
     const value = type === 'flat' ? Math.round(parseFloat(req.body.value||0)*100) : Math.max(1, Math.min(90, parseInt(req.body.value||0,10)));
     const min_amount = req.body.min_amount ? Math.round(parseFloat(req.body.min_amount)*100) : 0;
-    if (code && value) await db.createDiscount({ code, type, value, min_amount, active: req.body.active ? 1 : 1 });
+    if (code && value) await db.createDiscount({ code, type, value, min_amount, active: 1 });
     res.redirect('/admin/discounts');
   } catch (e) { next(e); }
 });

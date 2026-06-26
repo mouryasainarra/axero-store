@@ -1,4 +1,3 @@
-require('dotenv').config();
 // seed.js — sample products into Supabase Postgres. Run: npm run seed
 const db = require('./db');
 const samples = [
@@ -17,11 +16,8 @@ const samples = [
   await db.ready;
   const ids = [];
   for (const p of samples) { const r = await db.createProduct(p); if (r && r.id) ids.push(r.id); }
-  // feature the first four products on the home page
   for (const id of ids.slice(0, 4)) await db.updateProduct(id, Object.assign({}, samples[ids.indexOf(id)], { featured: 1 }));
-  // a demo welcome discount (10% off, no minimum)
   await db.createDiscount({ code: 'WELCOME10', type: 'percent', value: 10, min_amount: 0, active: 1 });
-  // a couple of sample reviews on the first product
   if (ids[0]) { await db.addReview({ product_id: ids[0], name: 'Rahul', rating: 5, comment: 'Excellent fit and premium fabric.' });
                 await db.addReview({ product_id: ids[0], name: 'Aisha', rating: 4, comment: 'Looks great, runs slightly snug.' }); }
   console.log('Seeded ' + samples.length + ' products, featured 4, added WELCOME10 (10% off) and sample reviews.');
