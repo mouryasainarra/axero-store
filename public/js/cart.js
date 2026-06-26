@@ -205,5 +205,17 @@
     paint(5);
   }
 
+  // ---------------- THEME (light / dark) ----------------
+  (function(){
+    var root = document.documentElement;
+    try { var saved = localStorage.getItem('axero_theme'); if (saved) root.setAttribute('data-theme', saved); } catch(e){}
+    var tb = $('themeBtn');
+    if (tb) tb.addEventListener('click', function(){
+      var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      if (next === 'dark') root.removeAttribute('data-theme'); else root.setAttribute('data-theme','light');
+      try { localStorage.setItem('axero_theme', next); } catch(e){}
+    });
+  })();
+
   syncBagBadge(); syncWishUI(); render();
 })();
