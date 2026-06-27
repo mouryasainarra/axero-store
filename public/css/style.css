@@ -534,3 +534,17 @@ body{transition:background .25s ease,color .25s ease;}
   .g-stage{max-width:none;}
   .g-dots{display:flex;}
 }
+
+/* ============ customized t-shirt (upload your design) ============ */
+.custom-overlay{position:absolute;top:26%;left:50%;transform:translateX(-50%);width:42%;height:40%;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3;}
+.custom-overlay img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.3));}
+.custom-box{background:var(--panel2);border:1px dashed var(--line);border-radius:12px;padding:14px;margin-bottom:14px;}
+.cu-step{font-weight:700;font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);margin:0 0 8px;}
+.cu-drop{display:flex;align-items:center;justify-content:center;text-align:center;min-height:62px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--muted);cursor:pointer;padding:10px;transition:border-color .2s,color .2s;}
+.cu-drop:hover{border-color:var(--gold);color:var(--cream);}
+.cu-hint{font-size:.78rem;color:var(--muted);margin:8px 0 0;}
+.cu-status{font-size:.82rem;margin:8px 0 0;min-height:1.1em;}
+.cu-status.ok{color:#5BBF7B;} .cu-status.err{color:#E08A8A;}
+.custom-buy .sizelbl{margin-bottom:12px;}
+.custom-tag{display:block;color:var(--gold);font-weight:600;margin-top:2px;}
+.art-link{color:var(--gold);text-decoration:underline;margin-right:8px;font-size:.85rem;white-space:nowrap;}
