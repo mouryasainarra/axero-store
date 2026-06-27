@@ -18,7 +18,7 @@
   function syncBagBadge(){ var b = $('bagCount'); if (!b) return; var n = count(); b.textContent = n; b.classList.toggle('show', n>0); }
 
   function addItem(p){
-    var ex = cart.find(function(i){ return i.id===p.id && i.size===p.size; });
+    var ex = p.custom ? null : cart.find(function(i){ return i.id===p.id && i.size===p.size && !i.custom; });
     if (ex) ex.qty += 1; else cart.push(Object.assign({}, p, { qty: 1 }));
     saveCart(cart); syncBagBadge(); setStage('cart'); discount=0; appliedCode=''; render(); openDrawer();
   }
@@ -36,6 +36,7 @@
       return '<div class="citem"><div class="thumb">'+(i.img?'<img src="'+i.img+'" alt="">':'')+'</div>'
         + '<div style="flex:1"><p class="cname">'+i.name+'</p>'
         + '<small>Size '+(i.size||'-')+' &middot; '+money(i.price)+'</small>'
+        + (i.custom ? '<small class="custom-tag">✓ Custom print</small>' : '')
         + '<div class="qty"><button data-q="'+idx+'" data-d="-1" aria-label="Decrease">&minus;</button>'
         + '<span>'+i.qty+'</span><button data-q="'+idx+'" data-d="1" aria-label="Increase">+</button>'
         + '<button class="rm" data-rm="'+idx+'">Remove</button></div></div></div>';
@@ -69,9 +70,40 @@
   document.querySelectorAll('.add').forEach(function(btn){
     btn.addEventListener('click', function(){
       var sel = $(btn.dataset.sizeSelect);
-      addItem({ id:Number(btn.dataset.id), name:btn.dataset.name, price:Number(btn.dataset.price), img:btn.dataset.img||'', size: sel?sel.value:'' });
+      var custom = btn.dataset.customUrl || '';
+      if (btn.dataset.custom === '1' && !custom){ alert('Please upload your design first.'); return; }
+      addItem({ id:Number(btn.dataset.id), name:btn.dataset.name, price:Number(btn.dataset.price),
+        img: custom || btn.dataset.img || '', size: sel?sel.value:'', custom: custom || undefined });
     });
   });
+
+  // ---- custom t-shirt: upload design, preview on the tee, enable add ----
+  (function(){
+    var file = $('customFile'); if (!file) return;
+    var addBtn = $('customAdd'), status = $('customStatus'), dropText = $('customDropText');
+    var overlay = $('customOverlay'), preview = $('customPreview');
+    file.addEventListener('change', async function(){
+      var f = file.files && file.files[0]; if (!f) return;
+      if (!f.type || f.type.indexOf('image/') !== 0){ if(status){status.className='cu-status err';status.textContent='Please choose an image file.';} return; }
+      if (f.size > 5*1024*1024){ if(status){status.className='cu-status err';status.textContent='Image is too large (max 5 MB).';} return; }
+      // instant local preview
+      var localUrl = URL.createObjectURL(f);
+      if (preview){ preview.src = localUrl; } if (overlay){ overlay.style.display='flex'; }
+      if (status){ status.className='cu-status'; status.textContent='Uploading…'; }
+      if (dropText) dropText.textContent = f.name;
+      try {
+        var fd = new FormData(); fd.append('design', f);
+        var r = await fetch('/api/custom-upload', { method:'POST', body: fd });
+        var d = await r.json();
+        if (d.ok){
+          addBtn.dataset.customUrl = d.url; addBtn.disabled = false; addBtn.textContent = 'Add to bag';
+          if (status){ status.className='cu-status ok'; status.textContent='✓ Design uploaded — looks good!'; }
+        } else {
+          addBtn.disabled = true; if (status){ status.className='cu-status err'; status.textContent = d.error || 'Upload failed.'; }
+        }
+      } catch(e){ addBtn.disabled = true; if (status){ status.className='cu-status err'; status.textContent='Upload failed, please try again.'; } }
+    });
+  })();
 
   if ($('cartItems')) $('cartItems').addEventListener('click', function(e){
     var q = e.target.closest('[data-q]'); var rm = e.target.closest('[data-rm]');
@@ -113,7 +145,7 @@
     var btn=this; btn.disabled=true; btn.textContent='Starting payment…';
     try {
       var res = await fetch('/api/checkout', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ cart: cart.map(function(i){return {id:i.id,qty:i.qty,size:i.size};}), shipping:s, code: appliedCode }) });
+        body: JSON.stringify({ cart: cart.map(function(i){return {id:i.id,qty:i.qty,size:i.size,custom:i.custom};}), shipping:s, code: appliedCode }) });
       var data = await res.json();
       if (!data.orderId){ alert(data.error||'Could not start checkout.'); resetPay(btn); return; }
       var rzp = new Razorpay({ key:data.keyId, amount:data.amount, currency:data.currency, name:data.name,
@@ -135,7 +167,7 @@
     var btn=this; btn.disabled=true; btn.textContent='Placing order…';
     try {
       var res = await fetch('/api/cod-order', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ cart: cart.map(function(i){return {id:i.id,qty:i.qty,size:i.size};}), shipping:s, code: appliedCode }) });
+        body: JSON.stringify({ cart: cart.map(function(i){return {id:i.id,qty:i.qty,size:i.size,custom:i.custom};}), shipping:s, code: appliedCode }) });
       var out = await res.json();
       if (out.redirect){ localStorage.removeItem(CART_KEY); window.location = out.redirect; }
       else { alert(out.error||'Could not place order.'); btn.disabled=false; btn.textContent='Cash on Delivery'; }
