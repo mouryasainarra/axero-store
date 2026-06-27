@@ -38,7 +38,8 @@
    if (product.image_url && gallery.indexOf(product.image_url) === -1) gallery.push(product.image_url);
    (product.images||'').split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).forEach(u=>{ if(!gallery.includes(u)) gallery.push(u); });
    const detailLines = (product.details||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
-   const hasSpecs = product.material || product.fit || product.care || detailLines.length; %>
+   const hasSpecs = product.material || product.fit || product.care || detailLines.length;
+   const isCustom = product.category === 'Customized T-Shirts'; %>
 
 <main class="wrap pdp">
   <p class="breadcrumb">Home / <a href="/?gender=<%= product.gender %>" style="color:var(--cream);"><%= product.gender %></a> / <a href="/?gender=<%= product.gender %>&category=<%= encodeURIComponent(product.category) %>" style="color:var(--cream);"><%= product.category %></a> / <b><%= product.name %></b></p>
@@ -63,6 +64,7 @@
             <% gallery.forEach((u,i)=>{ %><button type="button" class="g-dot <%= i===0?'on':'' %>" data-i="<%= i %>" aria-label="Image <%= i+1 %>"></button><% }) %>
           </div>
           <% } %>
+          <% if (isCustom) { %><div class="custom-overlay" id="customOverlay" style="display:none;"><img id="customPreview" alt="Your design"></div><% } %>
         </div>
       </div>
       <% } %>
@@ -75,6 +77,22 @@
       <% if (product.description) { %><p class="pdp-desc"><%= product.description %></p><% } %>
       <% if (soldOut) { %>
         <div class="banner">This item is currently sold out.</div>
+      <% } else if (isCustom) { %>
+        <div class="pdp-buy custom-buy">
+          <div class="custom-box">
+            <p class="cu-step">1 &middot; Upload your design</p>
+            <label class="cu-drop" for="customFile">
+              <span id="customDropText">Tap to choose an image (PNG or JPG)</span>
+              <input type="file" id="customFile" accept="image/*" hidden>
+            </label>
+            <p class="cu-hint">We print your image on the front of the tee. You'll see a preview on the left.</p>
+            <p class="cu-status" id="customStatus"></p>
+          </div>
+          <label class="sizelbl">2 &middot; Size
+            <select id="size-<%= product.id %>"><% sizes.forEach(s=>{ %><option value="<%= s %>"><%= s %></option><% }) %></select>
+          </label>
+          <button class="btn btn-primary add" id="customAdd" disabled data-custom="1" data-id="<%= product.id %>" data-name="<%= product.name.replace(/"/g,'&quot;') %>" data-price="<%= product.price %>" data-img="<%= product.image_url %>" data-size-select="size-<%= product.id %>">Upload a design to continue</button>
+        </div>
       <% } else { %>
         <div class="pdp-buy">
           <label class="sizelbl">Size
