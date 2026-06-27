@@ -92,6 +92,8 @@ module.exports = {
   async getImage(id){ return (await q('SELECT mime, data FROM product_images WHERE id=$1', [id])).rows[0]; },
   async deleteImage(id){ return q('DELETE FROM product_images WHERE id=$1', [id]); },
   async deleteProductImages(productId){ return q('DELETE FROM product_images WHERE product_id=$1', [productId]); },
+  // a customer-uploaded custom print design (product_id NULL = isolated from product galleries)
+  async addCustomUpload(mime, buffer){ return (await q('INSERT INTO product_images (product_id,mime,data) VALUES (NULL,$1,$2) RETURNING id', [mime, buffer])).rows[0]; },
 
   async getReviews(productId){ return (await q('SELECT * FROM reviews WHERE product_id=$1 ORDER BY created_at DESC', [productId])).rows; },
   async addReview(r){ return q('INSERT INTO reviews (product_id,name,rating,comment) VALUES ($1,$2,$3,$4)', [r.product_id,r.name,r.rating,r.comment]); },

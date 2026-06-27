@@ -139,7 +139,9 @@ async function buildItems(cart){
     const qty = Math.max(1, Math.min(20, Number(entry.qty) || 1));
     if (!p || !p.active || p.stock <= 0) continue;
     amount += p.price * qty;
-    items.push({ id: p.id, name: p.name, price: p.price, cost: p.cost || 0, qty, size: entry.size || '' });
+    const item = { id: p.id, name: p.name, price: p.price, cost: p.cost || 0, qty, size: entry.size || '' };
+    if (entry.custom && /^\/img\/\d+$/.test(entry.custom)) item.custom = entry.custom;
+    items.push(item);
   }
   return { amount, items };
 }
@@ -203,6 +205,15 @@ app.post('/api/cod-order', async (req, res) => {
     for (const it of items) await db.decrementStock(it.id, it.qty);
     res.json({ redirect: '/success?id=' + row.id });
   } catch (err) { console.error('COD error:', err.message); res.status(500).json({ error: 'Could not place order. Please try again.' }); }
+});
+
+app.post('/api/custom-upload', upload.single('design'), async (req, res) => {
+  try {
+    if (!req.file || !req.file.mimetype || !req.file.mimetype.startsWith('image/')) return res.json({ ok:false, error:'Please choose an image file.' });
+    const row = await db.addCustomUpload(req.file.mimetype, req.file.buffer);
+    if (!row) return res.json({ ok:false, error:'Upload failed, please try again.' });
+    res.json({ ok:true, url:'/img/' + row.id });
+  } catch (e) { res.json({ ok:false, error:'Upload failed, please try again.' }); }
 });
 
 app.get('/img/:id', async (req, res) => {
