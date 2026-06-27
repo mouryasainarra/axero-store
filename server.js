@@ -23,8 +23,8 @@ const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || '';
 const COD_ENABLED = (process.env.COD_ENABLED || 'true') !== 'false';
 
 const CATS = {
-  Men: ['Suits', 'Sportswear', 'Oversized T-Shirts', 'Printed Jeans'],
-  Women: ['Dresses', 'Tops', 'Co-ords', 'Printed Jeans']
+  Men: ['Oversized T-Shirts', 'Regular Fit T-Shirts', 'Polo T-Shirts', 'Full Sleeve T-Shirts', 'Sleeveless T-Shirts', 'Hoodies', 'Customized T-Shirts'],
+  Women: ['Oversized T-Shirts', 'Regular Fit T-Shirts', 'Polo T-Shirts', 'Full Sleeve T-Shirts', 'Sleeveless T-Shirts', 'Hoodies', 'Customized T-Shirts', 'Crop T-Shirts']
 };
 const ALL_CATS = [...new Set([...CATS.Men, ...CATS.Women])];
 const fmtMoney = new Intl.NumberFormat('en-IN', { style: 'currency', currency: CURRENCY, maximumFractionDigits: 2 });
@@ -308,7 +308,7 @@ app.get('/admin/products/:id/edit', requireAdmin, async (req, res, next) => {
   catch (e) { next(e); }
 });
 function parseForm(b){
-  return { name: (b.name||'').trim(), category: ALL_CATS.includes(b.category) ? b.category : 'Suits',
+  return { name: (b.name||'').trim(), category: ALL_CATS.includes(b.category) ? b.category : 'Oversized T-Shirts',
     gender: ['Men','Women'].includes(b.gender) ? b.gender : 'Men',
     description: (b.description||'').trim(), price: Math.round(parseFloat(b.price||0)*100),
     cost: b.cost ? Math.round(parseFloat(b.cost)*100) : 0,
